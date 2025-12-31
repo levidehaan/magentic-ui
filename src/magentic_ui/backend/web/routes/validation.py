@@ -40,6 +40,23 @@ class ValidationService:
                 "OpenAIChatCompletionClient",
             ]:
                 provider = "autogen_ext.models.openai.OpenAIChatCompletionClient"
+            elif provider in [
+                "anthropic_chat_completion_client",
+                "AnthropicChatCompletionClient",
+            ]:
+                provider = "autogen_ext.models.anthropic.AnthropicChatCompletionClient"
+            elif provider in [
+                "openrouter_chat_completion_client",
+                "OpenRouterChatCompletionClient",
+            ]:
+                # OpenRouter uses OpenAI-compatible API, so we use OpenAIChatCompletionClient
+                provider = "autogen_ext.models.openai.OpenAIChatCompletionClient"
+            elif provider in [
+                "claude_code_agent",
+                "ClaudeCodeAgent",
+            ]:
+                # Claude Code Agent uses the CLI, special handling
+                provider = "magentic_ui.agents.claude_code.ClaudeCodeAgent"
 
             module_path, class_name = provider.rsplit(".", maxsplit=1)
             module = importlib.import_module(module_path)

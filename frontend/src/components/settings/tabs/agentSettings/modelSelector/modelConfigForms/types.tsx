@@ -80,10 +80,69 @@ export const OllamaModelConfigSchema = z.object({
 
 export type OllamaModelConfig = z.infer<typeof OllamaModelConfigSchema>;
 
+export const AnthropicModelConfigSchema = z.object({
+  provider: z.literal("autogen_ext.models.anthropic.AnthropicChatCompletionClient"),
+  config: z.object({
+    model: z.string().min(1, "Model name is required."),
+    model_info: ModelInfoSchema.optional()
+  }).passthrough(),
+}).passthrough();
+
+export type AnthropicModelConfig = z.infer<typeof AnthropicModelConfigSchema>;
+
+export const OpenRouterModelConfigSchema = z.object({
+  provider: z.literal("OpenRouterChatCompletionClient"),
+  config: z.object({
+    model: z.string().min(1, "Model name is required."),
+    model_info: ModelInfoSchema.optional()
+  }).passthrough(),
+}).passthrough();
+
+export type OpenRouterModelConfig = z.infer<typeof OpenRouterModelConfigSchema>;
+
+export const ClaudeCodeAgentConfigSchema = z.object({
+  provider: z.literal("ClaudeCodeAgent"),
+  config: z.object({
+    work_dir: z.string().nullable().optional(),
+    allowed_tools: z.array(z.string()).default(["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Task"]),
+    permission_mode: z.enum(["default", "acceptEdits", "acceptAll"]).default("default"),
+    model: z.string().nullable().optional(),
+    max_turns: z.number().default(50),
+    timeout_seconds: z.number().default(300),
+  }),
+});
+
+export type ClaudeCodeAgentConfig = z.infer<typeof ClaudeCodeAgentConfigSchema>;
+
+// OpenRouter API model type
+export interface OpenRouterModel {
+  id: string;
+  name: string;
+  description?: string;
+  context_length: number;
+  pricing: {
+    prompt: string;
+    completion: string;
+  };
+  architecture?: {
+    modality: string;
+    input_modalities?: string[];
+    output_modalities?: string[];
+  };
+  top_provider?: {
+    max_completion_tokens?: number;
+    is_moderated?: boolean;
+  };
+  supported_parameters?: string[];
+}
+
 export const ModelConfigSchema = z.discriminatedUnion("provider", [
   OpenAIModelConfigSchema,
   AzureModelConfigSchema,
-  OllamaModelConfigSchema
+  OllamaModelConfigSchema,
+  AnthropicModelConfigSchema,
+  OpenRouterModelConfigSchema,
+  ClaudeCodeAgentConfigSchema,
 ]);
 
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;

@@ -4,13 +4,19 @@ import {
   OpenAIModelConfigForm,
   AzureModelConfigForm,
   OllamaModelConfigForm,
+  AnthropicModelConfigForm,
+  OpenRouterModelConfigForm,
 } from "./modelConfigForms";
+import ClaudeCodeConfigForm from "./modelConfigForms/ClaudeCodeConfigForm";
 import { ModelConfig, ModelConfigFormProps } from "./modelConfigForms/types";
 
 // Import the default configs from each form
 import { DEFAULT_OPENAI } from "./modelConfigForms/OpenAIModelConfigForm";
 import { DEFAULT_AZURE } from "./modelConfigForms/AzureModelConfigForm";
 import { DEFAULT_OLLAMA } from "./modelConfigForms/OllamaModelConfigForm";
+import { DEFAULT_ANTHROPIC } from "./modelConfigForms/AnthropicModelConfigForm";
+import { DEFAULT_OPENROUTER } from "./modelConfigForms/OpenRouterModelConfigForm";
+import { DEFAULT_CLAUDE_CODE } from "./modelConfigForms/ClaudeCodeConfigForm";
 
 interface ModelSelectorProps {
   onChange: (m: ModelConfig) => void;
@@ -20,7 +26,10 @@ interface ModelSelectorProps {
 export const PROVIDERS = {
   openai: DEFAULT_OPENAI.provider,
   azure: DEFAULT_AZURE.provider,
-  ollama: DEFAULT_OLLAMA.provider
+  ollama: DEFAULT_OLLAMA.provider,
+  anthropic: DEFAULT_ANTHROPIC.provider,
+  openrouter: DEFAULT_OPENROUTER.provider,
+  claudecode: DEFAULT_CLAUDE_CODE.provider,
 }
 
 // Map each model value to its config form, label, and initial config value
@@ -30,13 +39,6 @@ export const PROVIDER_FORM_MAP: Record<string, { label: string, defaultValue: Mo
     defaultValue: { ...DEFAULT_OPENAI },
     form: OpenAIModelConfigForm,
     presets: {
-      "OpenRouter": {
-        ...DEFAULT_OPENAI,
-        config: {
-          ...DEFAULT_OPENAI.config,
-          base_url: "https://openrouter.ai/api/v1"
-        }
-      },
       "o3-2025-04-16": {
         ...DEFAULT_OPENAI,
         config: {
@@ -152,6 +154,79 @@ export const PROVIDER_FORM_MAP: Record<string, { label: string, defaultValue: Mo
     form: OllamaModelConfigForm,
     presets: { [DEFAULT_OLLAMA.config.model]: { ...DEFAULT_OLLAMA } }
   },
+  [DEFAULT_ANTHROPIC.provider]: {
+    label: "Anthropic",
+    defaultValue: { ...DEFAULT_ANTHROPIC },
+    form: AnthropicModelConfigForm,
+    presets: {
+      "claude-sonnet-4-20250514": {
+        ...DEFAULT_ANTHROPIC,
+        config: {
+          ...DEFAULT_ANTHROPIC.config,
+          model: "claude-sonnet-4-20250514"
+        }
+      },
+      "claude-3-5-sonnet-20241022": {
+        ...DEFAULT_ANTHROPIC,
+        config: {
+          ...DEFAULT_ANTHROPIC.config,
+          model: "claude-3-5-sonnet-20241022"
+        }
+      },
+      "claude-3-5-haiku-20241022": {
+        ...DEFAULT_ANTHROPIC,
+        config: {
+          ...DEFAULT_ANTHROPIC.config,
+          model: "claude-3-5-haiku-20241022"
+        }
+      },
+      "claude-3-opus-20240229": {
+        ...DEFAULT_ANTHROPIC,
+        config: {
+          ...DEFAULT_ANTHROPIC.config,
+          model: "claude-3-opus-20240229"
+        }
+      }
+    }
+  },
+  [DEFAULT_OPENROUTER.provider]: {
+    label: "OpenRouter",
+    defaultValue: { ...DEFAULT_OPENROUTER },
+    form: OpenRouterModelConfigForm,
+    presets: {
+      "anthropic/claude-sonnet-4": {
+        ...DEFAULT_OPENROUTER,
+        config: {
+          ...DEFAULT_OPENROUTER.config,
+          model: "anthropic/claude-sonnet-4"
+        }
+      }
+    }
+  },
+  [DEFAULT_CLAUDE_CODE.provider]: {
+    label: "Claude Code CLI",
+    defaultValue: { ...DEFAULT_CLAUDE_CODE },
+    form: ClaudeCodeConfigForm,
+    presets: {
+      "default": {
+        ...DEFAULT_CLAUDE_CODE,
+      },
+      "accept-all": {
+        ...DEFAULT_CLAUDE_CODE,
+        config: {
+          ...DEFAULT_CLAUDE_CODE.config,
+          permission_mode: "acceptAll" as const,
+        }
+      },
+      "opus-4.5": {
+        ...DEFAULT_CLAUDE_CODE,
+        config: {
+          ...DEFAULT_CLAUDE_CODE.config,
+          model: "claude-opus-4-5-20251101",
+        }
+      }
+    }
+  },
 };
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ onChange, value }) => {
@@ -181,14 +256,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onChange, value }) => {
     }
   };
 
-  // --- Hide advanced toggles for OpenAI recognized models (except OpenRouter and GPT-5 models) ---
+  // --- Hide advanced toggles for OpenAI recognized models (except GPT-5 models) ---
+  // OpenRouter has its own form that auto-detects capabilities
   let hideAdvancedToggles = false;
   if (
     provider === DEFAULT_OPENAI.provider &&
     providerFormEntry &&
     preset &&
     Object.keys(providerFormEntry.presets).includes(preset) &&
-    preset !== 'OpenRouter' &&
     !preset.startsWith('gpt-5')
   ) {
     hideAdvancedToggles = true;
