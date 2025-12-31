@@ -5,6 +5,7 @@ import {
   AzureModelConfigForm,
   OllamaModelConfigForm,
   AnthropicModelConfigForm,
+  OpenRouterModelConfigForm,
 } from "./modelConfigForms";
 import { ModelConfig, ModelConfigFormProps } from "./modelConfigForms/types";
 
@@ -13,6 +14,7 @@ import { DEFAULT_OPENAI } from "./modelConfigForms/OpenAIModelConfigForm";
 import { DEFAULT_AZURE } from "./modelConfigForms/AzureModelConfigForm";
 import { DEFAULT_OLLAMA } from "./modelConfigForms/OllamaModelConfigForm";
 import { DEFAULT_ANTHROPIC } from "./modelConfigForms/AnthropicModelConfigForm";
+import { DEFAULT_OPENROUTER } from "./modelConfigForms/OpenRouterModelConfigForm";
 
 interface ModelSelectorProps {
   onChange: (m: ModelConfig) => void;
@@ -23,7 +25,8 @@ export const PROVIDERS = {
   openai: DEFAULT_OPENAI.provider,
   azure: DEFAULT_AZURE.provider,
   ollama: DEFAULT_OLLAMA.provider,
-  anthropic: DEFAULT_ANTHROPIC.provider
+  anthropic: DEFAULT_ANTHROPIC.provider,
+  openrouter: DEFAULT_OPENROUTER.provider
 }
 
 // Map each model value to its config form, label, and initial config value
@@ -33,13 +36,6 @@ export const PROVIDER_FORM_MAP: Record<string, { label: string, defaultValue: Mo
     defaultValue: { ...DEFAULT_OPENAI },
     form: OpenAIModelConfigForm,
     presets: {
-      "OpenRouter": {
-        ...DEFAULT_OPENAI,
-        config: {
-          ...DEFAULT_OPENAI.config,
-          base_url: "https://openrouter.ai/api/v1"
-        }
-      },
       "o3-2025-04-16": {
         ...DEFAULT_OPENAI,
         config: {
@@ -190,6 +186,20 @@ export const PROVIDER_FORM_MAP: Record<string, { label: string, defaultValue: Mo
       }
     }
   },
+  [DEFAULT_OPENROUTER.provider]: {
+    label: "OpenRouter",
+    defaultValue: { ...DEFAULT_OPENROUTER },
+    form: OpenRouterModelConfigForm,
+    presets: {
+      "anthropic/claude-sonnet-4": {
+        ...DEFAULT_OPENROUTER,
+        config: {
+          ...DEFAULT_OPENROUTER.config,
+          model: "anthropic/claude-sonnet-4"
+        }
+      }
+    }
+  },
 };
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ onChange, value }) => {
@@ -219,14 +229,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onChange, value }) => {
     }
   };
 
-  // --- Hide advanced toggles for OpenAI recognized models (except OpenRouter and GPT-5 models) ---
+  // --- Hide advanced toggles for OpenAI recognized models (except GPT-5 models) ---
+  // OpenRouter has its own form that auto-detects capabilities
   let hideAdvancedToggles = false;
   if (
     provider === DEFAULT_OPENAI.provider &&
     providerFormEntry &&
     preset &&
     Object.keys(providerFormEntry.presets).includes(preset) &&
-    preset !== 'OpenRouter' &&
     !preset.startsWith('gpt-5')
   ) {
     hideAdvancedToggles = true;

@@ -45,6 +45,12 @@ class ValidationService:
                 "AnthropicChatCompletionClient",
             ]:
                 provider = "autogen_ext.models.anthropic.AnthropicChatCompletionClient"
+            elif provider in [
+                "openrouter_chat_completion_client",
+                "OpenRouterChatCompletionClient",
+            ]:
+                # OpenRouter uses OpenAI-compatible API, so we use OpenAIChatCompletionClient
+                provider = "autogen_ext.models.openai.OpenAIChatCompletionClient"
 
             module_path, class_name = provider.rsplit(".", maxsplit=1)
             module = importlib.import_module(module_path)

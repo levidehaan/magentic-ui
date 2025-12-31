@@ -90,11 +90,44 @@ export const AnthropicModelConfigSchema = z.object({
 
 export type AnthropicModelConfig = z.infer<typeof AnthropicModelConfigSchema>;
 
+export const OpenRouterModelConfigSchema = z.object({
+  provider: z.literal("OpenRouterChatCompletionClient"),
+  config: z.object({
+    model: z.string().min(1, "Model name is required."),
+    model_info: ModelInfoSchema.optional()
+  }).passthrough(),
+}).passthrough();
+
+export type OpenRouterModelConfig = z.infer<typeof OpenRouterModelConfigSchema>;
+
+// OpenRouter API model type
+export interface OpenRouterModel {
+  id: string;
+  name: string;
+  description?: string;
+  context_length: number;
+  pricing: {
+    prompt: string;
+    completion: string;
+  };
+  architecture?: {
+    modality: string;
+    input_modalities?: string[];
+    output_modalities?: string[];
+  };
+  top_provider?: {
+    max_completion_tokens?: number;
+    is_moderated?: boolean;
+  };
+  supported_parameters?: string[];
+}
+
 export const ModelConfigSchema = z.discriminatedUnion("provider", [
   OpenAIModelConfigSchema,
   AzureModelConfigSchema,
   OllamaModelConfigSchema,
-  AnthropicModelConfigSchema
+  AnthropicModelConfigSchema,
+  OpenRouterModelConfigSchema
 ]);
 
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
