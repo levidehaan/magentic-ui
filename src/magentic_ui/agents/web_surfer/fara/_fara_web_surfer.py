@@ -193,22 +193,70 @@ class FaraWebSurfer(WebSurfer):
         return system_message, scaled_screenshot
 
     def _parse_thoughts_and_action(self, message: str) -> Tuple[str, Dict[str, Any]]:
+        # Validate empty or whitespace-only responses
+        if not message or not message.strip():
+            raise ValueError(
+                "Empty response from model. The model may not support the expected "
+                "tool call format. Ensure your model is compatible with Fara's "
+                "<tool_call> format (e.g., served via vLLM with appropriate templates)."
+            )
+
+        # Check for required tool_call tag
+        if "<tool_call>" not in message:
+            response_preview = f"{message[:200]}..." if len(message) > 200 else message
+            raise ValueError(
+                f"Response missing required <tool_call> tag. The model may not be "
+                f"generating tool calls in the expected format. "
+                f"Received response: {response_preview}"
+            )
+
         try:
-            tmp = message.split("<tool_call>\n")
+            # Handle both "<tool_call>\n" and "<tool_call>" (without newline)
+            if "<tool_call>\n" in message:
+                tmp = message.split("<tool_call>\n")
+            else:
+                tmp = message.split("<tool_call>")
+
             thoughts = tmp[0].strip()
+
+            # Validate we have content after the tool_call tag
+            if len(tmp) < 2 or not tmp[1].strip():
+                response_preview = f"{message[:200]}..." if len(message) > 200 else message
+                raise ValueError(
+                    f"Empty tool call content after <tool_call> tag. "
+                    f"Received response: {response_preview}"
+                )
+
             action_text = tmp[1].split("\n</tool_call>")[0]
+            if not action_text.strip():
+                action_text = tmp[1].split("</tool_call>")[0]
+
+            if not action_text.strip():
+                response_preview = f"{message[:200]}..." if len(message) > 200 else message
+                raise ValueError(
+                    f"Empty tool call content. "
+                    f"Received response: {response_preview}"
+                )
+
             try:
                 action = json.loads(action_text)
             except json.decoder.JSONDecodeError:
-                self.logger.error(f"Invalid action text: {action_text}")
+                self.logger.warning(f"JSON decode failed, trying ast.literal_eval: {action_text}")
                 action = ast.literal_eval(action_text)
 
             return thoughts, action
+        except ValueError:
+            # Re-raise ValueError as-is (our custom errors)
+            raise
         except Exception as e:
+            response_preview = f"{message[:200]}..." if len(message) > 200 else message
             self.logger.error(
-                f"Error parsing thoughts and action: {message}", exc_info=True
+                f"Error parsing thoughts and action: {response_preview}", exc_info=True
             )
-            raise e
+            raise ValueError(
+                f"Failed to parse model response. The model may not be compatible with "
+                f"Fara's expected format. Error: {e}. Response: {response_preview}"
+            ) from e
 
     def convert_resized_coords_to_original(
         self, coords: List[float], rsz_w: int, rsz_h: int, og_w: int, og_h: int
