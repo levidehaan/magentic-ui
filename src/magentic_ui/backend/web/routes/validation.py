@@ -51,6 +51,12 @@ class ValidationService:
             ]:
                 # OpenRouter uses OpenAI-compatible API, so we use OpenAIChatCompletionClient
                 provider = "autogen_ext.models.openai.OpenAIChatCompletionClient"
+            elif provider in [
+                "claude_code_agent",
+                "ClaudeCodeAgent",
+            ]:
+                # Claude Code Agent uses the CLI, special handling
+                provider = "magentic_ui.agents.claude_code.ClaudeCodeAgent"
 
             module_path, class_name = provider.rsplit(".", maxsplit=1)
             module = importlib.import_module(module_path)

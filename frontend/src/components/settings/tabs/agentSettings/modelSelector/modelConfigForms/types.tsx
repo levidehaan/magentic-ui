@@ -100,6 +100,20 @@ export const OpenRouterModelConfigSchema = z.object({
 
 export type OpenRouterModelConfig = z.infer<typeof OpenRouterModelConfigSchema>;
 
+export const ClaudeCodeAgentConfigSchema = z.object({
+  provider: z.literal("ClaudeCodeAgent"),
+  config: z.object({
+    work_dir: z.string().nullable().optional(),
+    allowed_tools: z.array(z.string()).default(["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Task"]),
+    permission_mode: z.enum(["default", "acceptEdits", "acceptAll"]).default("default"),
+    model: z.string().nullable().optional(),
+    max_turns: z.number().default(50),
+    timeout_seconds: z.number().default(300),
+  }),
+});
+
+export type ClaudeCodeAgentConfig = z.infer<typeof ClaudeCodeAgentConfigSchema>;
+
 // OpenRouter API model type
 export interface OpenRouterModel {
   id: string;
@@ -127,7 +141,8 @@ export const ModelConfigSchema = z.discriminatedUnion("provider", [
   AzureModelConfigSchema,
   OllamaModelConfigSchema,
   AnthropicModelConfigSchema,
-  OpenRouterModelConfigSchema
+  OpenRouterModelConfigSchema,
+  ClaudeCodeAgentConfigSchema,
 ]);
 
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;

@@ -7,6 +7,7 @@ import {
   AnthropicModelConfigForm,
   OpenRouterModelConfigForm,
 } from "./modelConfigForms";
+import ClaudeCodeConfigForm from "./modelConfigForms/ClaudeCodeConfigForm";
 import { ModelConfig, ModelConfigFormProps } from "./modelConfigForms/types";
 
 // Import the default configs from each form
@@ -15,6 +16,7 @@ import { DEFAULT_AZURE } from "./modelConfigForms/AzureModelConfigForm";
 import { DEFAULT_OLLAMA } from "./modelConfigForms/OllamaModelConfigForm";
 import { DEFAULT_ANTHROPIC } from "./modelConfigForms/AnthropicModelConfigForm";
 import { DEFAULT_OPENROUTER } from "./modelConfigForms/OpenRouterModelConfigForm";
+import { DEFAULT_CLAUDE_CODE } from "./modelConfigForms/ClaudeCodeConfigForm";
 
 interface ModelSelectorProps {
   onChange: (m: ModelConfig) => void;
@@ -26,7 +28,8 @@ export const PROVIDERS = {
   azure: DEFAULT_AZURE.provider,
   ollama: DEFAULT_OLLAMA.provider,
   anthropic: DEFAULT_ANTHROPIC.provider,
-  openrouter: DEFAULT_OPENROUTER.provider
+  openrouter: DEFAULT_OPENROUTER.provider,
+  claudecode: DEFAULT_CLAUDE_CODE.provider,
 }
 
 // Map each model value to its config form, label, and initial config value
@@ -196,6 +199,30 @@ export const PROVIDER_FORM_MAP: Record<string, { label: string, defaultValue: Mo
         config: {
           ...DEFAULT_OPENROUTER.config,
           model: "anthropic/claude-sonnet-4"
+        }
+      }
+    }
+  },
+  [DEFAULT_CLAUDE_CODE.provider]: {
+    label: "Claude Code CLI",
+    defaultValue: { ...DEFAULT_CLAUDE_CODE },
+    form: ClaudeCodeConfigForm,
+    presets: {
+      "default": {
+        ...DEFAULT_CLAUDE_CODE,
+      },
+      "accept-all": {
+        ...DEFAULT_CLAUDE_CODE,
+        config: {
+          ...DEFAULT_CLAUDE_CODE.config,
+          permission_mode: "acceptAll" as const,
+        }
+      },
+      "opus-4.5": {
+        ...DEFAULT_CLAUDE_CODE,
+        config: {
+          ...DEFAULT_CLAUDE_CODE.config,
+          model: "claude-opus-4-5-20251101",
         }
       }
     }
