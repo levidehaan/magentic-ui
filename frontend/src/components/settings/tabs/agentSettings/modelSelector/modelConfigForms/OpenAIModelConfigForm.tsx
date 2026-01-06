@@ -5,7 +5,7 @@ import { ModelConfigFormProps, OpenAIModelConfig } from "./types";
 export const DEFAULT_OPENAI: OpenAIModelConfig = {
   provider: "OpenAIChatCompletionClient",
   config: {
-    model: "gpt-4.1-2025-04-14",
+    model: "gpt-4o-2024-05-13",
     api_key: null,
     base_url: null,
     max_retries: 5,

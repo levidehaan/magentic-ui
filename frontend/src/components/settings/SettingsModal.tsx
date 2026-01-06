@@ -63,6 +63,29 @@ const SettingsModal: React.FC<SettingsMenuProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen, user?.email]);
 
+  const handleSave = async () => {
+    // Check all validation states before saving
+    const validationErrors = validateAll(config);
+    if (validationErrors.length > 0) {
+      const errors = validationErrors.join("\n");
+      message.error(errors);
+      return;
+    }
+
+    if (user?.email) {
+      try {
+        await settingsAPI.updateSettings(user.email, config);
+        // Update original config to match current config after successful save
+        setOriginalConfig(JSON.parse(JSON.stringify(config)));
+        setHasChanges(false);
+        message.success("Settings saved successfully!");
+      } catch (error) {
+        message.error("Failed to save settings");
+        console.error("Failed to save settings:", error);
+      }
+    }
+  };
+
   const handleUpdateConfig = async (changes: any) => {
     updateConfig(changes);
     setHasChanges(true);
@@ -164,13 +187,21 @@ const SettingsModal: React.FC<SettingsMenuProps> = ({ isOpen, onClose }) => {
             >
               Reset to Defaults
             </Button>
-            {hasChanges && (
-              <Typography.Text italic type="warning">
-                Warning: Settings changes will only apply when you create a new
-                session
-              </Typography.Text>
-            )}
+            {
+              hasChanges && (
+                <Typography.Text italic type="warning">
+                  You have unsaved changes.
+                </Typography.Text>
+              )}
           </Flex>,
+          <Flex gap="small" key="actions">
+            <Button key="cancel" onClick={handleClose}>
+              Close
+            </Button>
+            <Button key="save" type="primary" onClick={handleSave}>
+              Save Settings
+            </Button>
+          </Flex>
         ]}
       >
         {isLoading ? (

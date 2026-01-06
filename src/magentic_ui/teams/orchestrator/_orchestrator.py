@@ -466,13 +466,27 @@ class Orchestrator(BaseGroupChatManager):
                         UserMessage(content=exception_message, source=self._name)
                     )
                 token_limited_messages = await self._model_context.get_messages()
-                response = await self._model_client.create(
-                    token_limited_messages,
-                    json_output=True
-                    if self._model_client.model_info["json_output"]
-                    else False,
-                    cancellation_token=cancellation_token,
-                )
+                try:
+                    response = await self._model_client.create(
+                        token_limited_messages,
+                        json_output=True
+                        if self._model_client.model_info["json_output"]
+                        else False,
+                        cancellation_token=cancellation_token,
+                    )
+                except Exception as e:
+                    # Fallback for models that don't support JSON mode with Web Search (e.g. OpenRouter Online models)
+                    if "Web Search cannot be used with JSON mode" in str(e):
+                        trace_logger.warning(
+                            "Caught JSON mode conflict with Web Search. Retrying with json_output=False."
+                        )
+                        response = await self._model_client.create(
+                            token_limited_messages,
+                            json_output=False,
+                            cancellation_token=cancellation_token,
+                        )
+                    else:
+                        raise e
                 assert isinstance(response.content, str)
                 response_content = response.content
                 try:

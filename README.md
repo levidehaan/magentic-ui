@@ -16,6 +16,15 @@ _Automate your web tasks while you stay in control_
 Magentic-UI is a **research prototype** human-centered AI agent that solves complex web and coding tasks that may require monitoring. Unlike other black-box agents, the system reveals its plan before executions, lets you guide its actions, and requests approval for sensitive operations while browsing websites, executing code, and analyzing files.
 *Check out the [demo section](#demos) for inspiration on what tasks you can accomplish.*
 
+> [!IMPORTANT]
+> **Heavily Modified Version**
+> 
+> This is a heavily modified version of Magentic-UI maintained by [levidehaan](https://github.com/levidehaan).
+> Key additions include:
+> - **OpenRouter Support**: Fully integrated OpenRouter support for accessing a wide range of models (Gemini, Claude, Llama, etc.).
+> - **Claude Code CLI Support**: (Untested) Integration with the Claude Code CLI.
+> - **Enhanced UI**: Improved model selectors, settings persistence, and bug fixes.
+
 ## ✨ What's New
 
 Microsoft latest agentic model [Fara-7B](https://www.microsoft.com/en-us/research/blog/fara-7b-an-efficient-agentic-model-for-computer-use/) is now integrated in Magentic-UI, read how to launch in <a href="#fara-7b"> Fara-7B guide</a>

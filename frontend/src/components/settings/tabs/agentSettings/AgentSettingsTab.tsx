@@ -42,21 +42,31 @@ const AgentSettingsTab: React.FC<SettingsTabProps> = ({
 
   useEffect(() => {
     if (defaultModel) {
-      // Set all model_client_configs to defaultModel
-      const model_client_configs = Object.keys(MODEL_CLIENT_CONFIGS).reduce(
-        (prev, key) => {
-          prev[key] = defaultModel;
-          return prev;
-        },
-        {} as Record<string, ModelConfig>
-      );
+      // Set model_client_configs to defaultModel ONLY if they are missing
+      const new_model_client_configs = { ...config.model_client_configs };
+      let hasChanges = false;
 
-      handleUpdateConfig({
-        model_client_configs: model_client_configs,
-        default_model: defaultModel,
+      Object.keys(MODEL_CLIENT_CONFIGS).forEach((key) => {
+        // If the config for this agent is missing, initialize it with defaultModel
+        if (!new_model_client_configs[key]) {
+          new_model_client_configs[key] = defaultModel;
+          hasChanges = true;
+        }
       });
+
+      if (hasChanges) {
+        handleUpdateConfig({
+          model_client_configs: new_model_client_configs,
+          default_model: defaultModel,
+        });
+      } else if (!config.default_model) {
+        // If just default_model field is missing from config but agents are set, update it
+        handleUpdateConfig({
+          default_model: defaultModel
+        })
+      }
     }
-  }, [defaultModel]);
+  }, [defaultModel, config.model_client_configs]);
 
   // Fetch config info on component mount
   useEffect(() => {

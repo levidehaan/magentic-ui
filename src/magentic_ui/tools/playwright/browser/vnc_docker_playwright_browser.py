@@ -135,7 +135,10 @@ class VncDockerPlaywrightBrowser(
         """
         Get the address of the noVNC server.
         """
-        return f"http://{self._hostname}:{self._novnc_port}/vnc.html"
+        # When running inside docker, we still want to direct the user to localhost
+        # because the browser is mapped to the host's localhost ports.
+        hostname = "localhost" if self._inside_docker else self._hostname
+        return f"http://{hostname}:{self._novnc_port}/vnc.html"
 
     @property
     def novnc_port(self) -> int:

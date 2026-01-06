@@ -189,8 +189,8 @@ const DetailViewer: React.FC<DetailViewerProps> = ({
       );
     }
 
-    // Use server_url from config if set, otherwise default to localhost
-    const serverHost = config.server_url || "localhost";
+    // Use server_url from config if set, otherwise default to current hostname (if available) or localhost
+    const serverHost = config.server_url || (typeof window !== "undefined" ? window.location.hostname : "localhost");
 
     return (
       <div className="flex-1 w-full h-full flex flex-col">
@@ -216,8 +216,8 @@ const DetailViewer: React.FC<DetailViewerProps> = ({
         ) : (
           <div
             className="relative w-full h-full flex flex-col"
-            onMouseEnter={() => {}} // Moved overlay to BrowserIframe
-            onMouseLeave={() => {}} // Moved overlay to BrowserIframe
+            onMouseEnter={() => { }} // Moved overlay to BrowserIframe
+            onMouseLeave={() => { }} // Moved overlay to BrowserIframe
           >
             <Suspense fallback={<div>Loading VNC viewer...</div>}>
               <VncScreen
@@ -251,21 +251,19 @@ const DetailViewer: React.FC<DetailViewerProps> = ({
         <div className="flex justify-between items-center mb-4 border-b flex-shrink-0">
           <div className="flex">
             <button
-              className={`px-6 py-2 font-medium rounded-t-lg transition-colors ${
-                activeTab === "screenshots"
-                  ? "bg-secondary text-primary border-2 border-b-0 border-primary"
-                  : "text-secondary hover:text-primary hover:bg-secondary/10"
-              }`}
+              className={`px-6 py-2 font-medium rounded-t-lg transition-colors ${activeTab === "screenshots"
+                ? "bg-secondary text-primary border-2 border-b-0 border-primary"
+                : "text-secondary hover:text-primary hover:bg-secondary/10"
+                }`}
               onClick={() => handleTabChange("screenshots")}
             >
               Screenshots
             </button>
             <button
-              className={`px-6 py-2 font-medium rounded-t-lg transition-colors ${
-                activeTab === "live"
-                  ? "bg-secondary text-primary border-2 border-b-0 border-primary"
-                  : "text-secondary hover:text-primary hover:bg-secondary/10"
-              }`}
+              className={`px-6 py-2 font-medium rounded-t-lg transition-colors ${activeTab === "live"
+                ? "bg-secondary text-primary border-2 border-b-0 border-primary"
+                : "text-secondary hover:text-primary hover:bg-secondary/10"
+                }`}
               onClick={() => handleTabChange("live")}
             >
               Live View

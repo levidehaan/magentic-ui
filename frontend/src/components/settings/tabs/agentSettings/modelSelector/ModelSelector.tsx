@@ -18,11 +18,6 @@ import { DEFAULT_ANTHROPIC } from "./modelConfigForms/AnthropicModelConfigForm";
 import { DEFAULT_OPENROUTER } from "./modelConfigForms/OpenRouterModelConfigForm";
 import { DEFAULT_CLAUDE_CODE } from "./modelConfigForms/ClaudeCodeConfigForm";
 
-interface ModelSelectorProps {
-  onChange: (m: ModelConfig) => void;
-  value?: ModelConfig;
-}
-
 export const PROVIDERS = {
   openai: DEFAULT_OPENAI.provider,
   azure: DEFAULT_AZURE.provider,
@@ -236,12 +231,17 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onChange, value }) => {
 
   const config = value?.config;
   let preset = undefined;
-  if (providerFormEntry) {
-    preset = Object.entries(providerFormEntry.presets)
-      .find(([, presetConfig]) => comparePreset(presetConfig.config, config))
-    ?.[0]
+  // For OpenRouter, we don't rely on presets as much, so we prioritize the current model value
+  if (provider === DEFAULT_OPENROUTER.provider) {
+    preset = value?.config?.model
+  } else {
+    if (providerFormEntry) {
+      preset = Object.entries(providerFormEntry.presets)
+        .find(([, presetConfig]) => comparePreset(presetConfig.config, config))
+        ?.[0]
+    }
+    preset ??= value?.config?.model;
   }
-  preset ??= value?.config?.model;
 
   // When dropdown changes, update both selectedModel and values
   const handleProviderChange = (provider: string) => {
@@ -284,9 +284,9 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onChange, value }) => {
               popupMatchSelectWidth={false}
             />
             {
-              providerFormEntry &&
+              providerFormEntry && provider !== DEFAULT_OPENROUTER.provider &&
               <Select
-                options={Object.entries(providerFormEntry.presets).map(([key, { label }]) => ({ value: key, label }))}
+                options={Object.entries(providerFormEntry.presets).map(([key]) => ({ value: key, label: key }))}
                 placeholder="Select a Preset"
                 value={preset}
                 onChange={handlePresetChange}

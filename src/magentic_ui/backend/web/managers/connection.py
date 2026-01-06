@@ -158,6 +158,21 @@ class WebSocketManager:
 
             env_vars = None
 
+            # Fetch user settings from DB to ensure we have the latest global keys
+            # This makes the backend robust against frontend failures to pass the full config
+            db_settings = await self._get_settings(run.user_id)
+            if db_settings and db_settings.config:
+                # Merge DB settings into settings_config, prioritizing DB for sensitive keys if missing
+                # or if we trust DB more for saved keys.
+                # Here we only ensure openrouter_api_key is present if missing or empty in request
+                if not settings_config.get("openrouter_api_key") and db_settings.config.get("openrouter_api_key"):
+                    logger.info("Injecting openrouter_api_key from database settings")
+                    settings_config["openrouter_api_key"] = db_settings.config.get("openrouter_api_key")
+
+                # Also ensure mcp_agent_configs are available if missing
+                if not settings_config.get("mcp_agent_configs") and db_settings.config.get("mcp_agent_configs"):
+                     settings_config["mcp_agent_configs"] = db_settings.config.get("mcp_agent_configs")
+
             settings_config["memory_controller_key"] = run.user_id
 
             state = None

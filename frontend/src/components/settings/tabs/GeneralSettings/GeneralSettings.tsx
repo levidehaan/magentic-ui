@@ -1,5 +1,5 @@
 import React from "react";
-import { Divider, Tooltip, Select, Flex, Switch } from "antd";
+import { Divider, Tooltip, Select, Flex, Switch, Input } from "antd";
 import { InfoCircleOutlined, MoonFilled, SunFilled } from "@ant-design/icons";
 import AllowedWebsitesList from "./AllowedWebsitesList";
 
@@ -32,6 +32,21 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({
             <SunFilled className="w-6 h-6" />
           )}
         </button>
+      </Flex>
+
+      <Flex align="center" justify="space-between" wrap gap="small">
+        <Flex align="center" justify="start" gap="small">
+          OpenRouter API Key
+          <Tooltip title="Global API Key for OpenRouter. This will be used if no specific key is provided in the model settings.">
+            <InfoCircleOutlined className="text-secondary hover:text-primary cursor-help" />
+          </Tooltip>
+        </Flex>
+        <Input.Password
+          placeholder="sk-or-..."
+          value={config.openrouter_api_key}
+          onChange={(e) => handleUpdateConfig({ openrouter_api_key: e.target.value })}
+          style={{ maxWidth: 300 }}
+        />
       </Flex>
 
       <Divider style={{ margin: "0px" }} />

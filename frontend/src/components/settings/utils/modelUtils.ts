@@ -1,6 +1,5 @@
 import { ModelConfig } from "../tabs/agentSettings/modelSelector/modelConfigForms/types";
 import { DEFAULT_OPENAI } from "../tabs/agentSettings/modelSelector/modelConfigForms/OpenAIModelConfigForm";
-import { PROVIDER_FORM_MAP } from "../tabs/agentSettings/modelSelector/ModelSelector";
 
 export const MODEL_CLIENT_CONFIGS = {
   orchestrator: {
@@ -22,10 +21,13 @@ export const MODEL_CLIENT_CONFIGS = {
   action_guard: {
     value: "action_guard",
     label: "Action Guard",
-    defaultValue:
-      PROVIDER_FORM_MAP[DEFAULT_OPENAI.provider].presets[
-      "gpt-4.1-nano-2025-04-14"
-      ],
+    defaultValue: {
+      ...DEFAULT_OPENAI,
+      config: {
+        ...DEFAULT_OPENAI.config,
+        model: "gpt-4o-mini-2024-07-18"
+      }
+    },
   },
 };
 

@@ -186,9 +186,10 @@ export const OpenRouterModelConfigForm: React.FC<ModelConfigFormProps> = ({ onCh
     const model = models.find(m => m.id === modelId);
     if (model) {
       // Auto-detect capabilities from the model
+      const isOnline = model.id.includes("online") || model.id.includes("sonar") || model.name.toLowerCase().includes("online");
       const hasVision = model.architecture?.input_modalities?.includes("image") || false;
       const hasTools = model.supported_parameters?.includes("tools") || false;
-      const hasJson = model.supported_parameters?.includes("response_format") || false;
+      const hasJson = (model.supported_parameters?.includes("response_format") || false) && !isOnline;
 
       form.setFieldsValue({
         config: {
@@ -314,9 +315,10 @@ export const OpenRouterModelConfigForm: React.FC<ModelConfigFormProps> = ({ onCh
               options={modelOptions}
               onChange={handleModelSelect}
               optionLabelProp="label"
-              dropdownStyle={{ maxHeight: 400 }}
+              dropdownStyle={{ maxHeight: 400, minWidth: 700 }}
               listHeight={350}
               virtual
+              style={{ minWidth: "100%" }}
             />
           )}
         </Form.Item>

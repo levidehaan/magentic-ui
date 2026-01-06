@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import time
+import string
 from pathlib import Path
 from typing import (
     AsyncGenerator,
@@ -171,6 +172,165 @@ class TeamManager:
             "This method should be implemented in a subclass or replaced with actual loading logic."
         )
 
+    def _sanitize_single_client_config(
+        self,
+        client_config: Union[ComponentModel, Dict[str, Any]],
+        settings_config: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        provider = None
+        if isinstance(client_config, ComponentModel):
+            provider = client_config.provider
+        elif isinstance(client_config, dict):
+            provider = client_config.get("provider")
+
+        if provider:
+            new_provider = None
+            if provider in [
+                "openrouter_chat_completion_client",
+                "OpenRouterChatCompletionClient",
+                "openai_chat_completion_client",
+                "OpenAIChatCompletionClient",
+            ]:
+                new_provider = "autogen_ext.models.openai.OpenAIChatCompletionClient"
+            elif provider in [
+                "azure_openai_chat_completion_client",
+                "AzureOpenAIChatCompletionClient",
+            ]:
+                new_provider = (
+                    "autogen_ext.models.openai.AzureOpenAIChatCompletionClient"
+                )
+            elif provider in [
+                "anthropic_chat_completion_client",
+                "AnthropicChatCompletionClient",
+            ]:
+                new_provider = (
+                    "autogen_ext.models.anthropic.AnthropicChatCompletionClient"
+                )
+
+            if new_provider:
+                if isinstance(client_config, ComponentModel):
+                    client_config.provider = new_provider
+                elif isinstance(client_config, dict):
+                    client_config["provider"] = new_provider
+
+        # Sanitize config fields for non-ASCII characters and whitespace
+        config_dict = None
+        if isinstance(client_config, ComponentModel):
+            config_dict = client_config.config
+        elif isinstance(client_config, dict):
+            config_dict = client_config.get("config")
+
+        if isinstance(config_dict, dict):
+            for key, value in config_dict.items():
+                original_value = value
+                if isinstance(value, str):
+                    # 1. Sanitize non-ASCII first
+                    if not value.isascii():
+                        logger.warning(
+                            f"Found non-ASCII characters in config field '{key}'. Sanitizing..."
+                        )
+                        value = value.encode("ascii", "ignore").decode("ascii")
+
+                    # 1b. Sanitize non-printable
+                    value = "".join(ch for ch in value if ch in string.printable)
+
+                    # 2. Strip whitespace and quotes
+                    value = value.strip().strip('"').strip("'")
+
+                    # 3. Check if it's a file path for api_key
+                    if key == "api_key" and value.startswith("/"):
+                        if os.path.exists(value):
+                            try:
+                                with open(value, "r") as f:
+                                    file_content = f.read().strip()
+                                    if file_content:
+                                        logger.info(f"Loaded API key from file: {value}")
+                                        value = file_content
+                                    else:
+                                        logger.warning(
+                                            f"API key file exists but is empty: {value}"
+                                        )
+                            except Exception as e:
+                                logger.warning(
+                                    f"Failed to read API key from file {value}: {e}"
+                                )
+                        else:
+                            logger.warning(
+                                f"API key starts with '/' but file does not exist: '{value}'"
+                            )
+
+                    # 4. Final check: if it still looks like a path, warn the user
+                    if key == "api_key" and value.startswith("/"):
+                        logger.error(
+                            f"The API key '{value}' appears to be a file path and could not be resolved to a valid key. Authentication will likely fail."
+                        )
+
+                # Inject global OpenRouter key if needed
+                # Prioritize settings_config (from UI/DB) over self.config
+                if key == "api_key" and not value and config_dict.get("base_url", "").startswith("https://openrouter.ai"):
+                    global_or_key = None
+                    if settings_config:
+                            global_or_key = settings_config.get("openrouter_api_key")
+                    if not global_or_key:
+                            global_or_key = self.config.get("openrouter_api_key")
+
+                    logger.info(f"Checking for global OpenRouter key in settings. Found: {'Yes' if global_or_key else 'No'}")
+                    if global_or_key:
+                            logger.info("Using global OpenRouter API key found in settings")
+                            value = global_or_key
+
+                if value != original_value:
+                    config_dict[key] = value
+
+            # Map model_info to model_capabilities for Autogen
+            if "model_info" in config_dict:
+                model_info = config_dict["model_info"]
+                if isinstance(model_info, dict):
+                    model_capabilities = {
+                        "vision": model_info.get("vision", False),
+                        "function_calling": model_info.get("function_calling", False),
+                        "json_output": model_info.get("json_output", False),
+                    }
+                    config_dict["model_capabilities"] = model_capabilities
+                # Remove model_info to avoid conflict with model_capabilities (mutually exclusive)
+                del config_dict["model_info"]
+
+            # Log base_url and masked api_key for debugging
+            if "base_url" in config_dict:
+                logger.info(f"Using base_url: {config_dict['base_url']}")
+            if "api_key" in config_dict:
+                key_val = config_dict["api_key"]
+                if key_val:
+                    masked_key = (
+                        f"{key_val[:10]}...{key_val[-4:]}"
+                        if len(key_val) > 14
+                        else "***"
+                    )
+                    logger.info(f"Using api_key: {masked_key}")
+                else:
+                    logger.warning(f"api_key in config is empty or None")
+
+    def _sanitize_client_configs(
+        self,
+        model_client_configs: Union[Dict[str, Any], ModelClientConfigs],
+        settings_config: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if isinstance(model_client_configs, ModelClientConfigs):
+            for field_name in [
+                "orchestrator",
+                "web_surfer",
+                "coder",
+                "file_surfer",
+                "action_guard",
+            ]:
+                client_config = getattr(model_client_configs, field_name)
+                if client_config:
+                    self._sanitize_single_client_config(client_config, settings_config)
+        elif isinstance(model_client_configs, dict):
+            for key, client_config in model_client_configs.items():
+                if client_config:
+                    self._sanitize_single_client_config(client_config, settings_config)
+
     async def _create_team(
         self,
         team_config: Union[str, Path, Dict[str, Any], ComponentModel],
@@ -301,6 +461,11 @@ class TeamManager:
                 logger.warning(
                     "Using LLM client configurations from UI settings (default is OpenAI) since no config file passed or config file incomplete."
                 )
+
+            # Sanitize client configs to handle short provider names or OpenRouter
+            if "model_client_configs" in config_params:
+                self._sanitize_client_configs(config_params["model_client_configs"], settings_config)
+
             if self.run_without_docker:
                 config_params["run_without_docker"] = True
                 # Allow browser_headless to be set by settings_config

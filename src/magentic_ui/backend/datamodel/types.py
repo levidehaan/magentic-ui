@@ -88,7 +88,7 @@ class UISettings(BaseModel):
 
 class SettingsConfig(BaseModel):
     # empty starting point
-    pass
+    openrouter_api_key: Optional[str] = None
 
 
 # web request/response data models
